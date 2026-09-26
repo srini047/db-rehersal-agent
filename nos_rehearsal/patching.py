@@ -1,10 +1,3 @@
-"""Server-side rules a patch must pass before it may touch production.
-
-These run inside the MCP server, after a human has approved the call, so they
-hold even if the agent (or the person approving) gets something wrong. What is
-protected and which values are allowed come from the device's NOS profile.
-"""
-
 import copy
 from collections.abc import Callable
 from typing import Any
@@ -24,13 +17,12 @@ VALUE_TYPE_CHECKS: dict[str, Callable[[Any], bool]] = {
 
 
 class PatchRejected(ValueError):
-    """The patch is not allowed to be applied to production."""
+    pass
 
 
 def apply_guarded_patch(
     config: Config, patch: list[dict], base_sha256: str, current_sha256: str, profile: NosProfile
 ) -> Config:
-    """Return the patched config, or raise PatchRejected explaining why not."""
     if base_sha256 != current_sha256:
         raise PatchRejected(
             f"Production changed since it was rehearsed (rehearsed {base_sha256[:12]}, "
@@ -51,7 +43,6 @@ def apply_guarded_patch(
 
 
 def protected_paths_touched(patch: list[dict], protected_paths: list[str]) -> list[str]:
-    """Protected paths that an operation targets, lies under, or contains."""
     protected = {path: jsonpointer.JsonPointer(path).parts for path in protected_paths}
     touched = set()
     for parts in _operation_pointers(patch):
@@ -63,12 +54,10 @@ def protected_paths_touched(patch: list[dict], protected_paths: list[str]) -> li
 
 
 def check_config_shape(config: Config, profile: NosProfile) -> None:
-    """Every value must be one of the profile's value types, at the profile's leaf depth if it has one."""
     _check_node(config, [], profile)
 
 
 def summarize_changes(before: Config, after: Config) -> dict[str, dict[str, list[str]]]:
-    """Per top-level key (a table, for SONiC), which entries were added, removed or modified."""
     summary = {}
     for table in sorted(before.keys() | after.keys()):
         old, new = before.get(table, {}), after.get(table, {})
@@ -83,7 +72,6 @@ def summarize_changes(before: Config, after: Config) -> dict[str, dict[str, list
 
 
 def _operation_pointers(patch: list[dict]) -> list[list[str]]:
-    """The `path` and `from` of every operation, split into JSON Pointer parts."""
     if not isinstance(patch, list) or not patch:
         raise PatchRejected("Patch must be a non-empty JSON Patch array.")
 

@@ -1,11 +1,3 @@
-"""Create the Docker Sandbox that runs rehearsal scripts. Safe to re-run.
-
-The sandbox only mounts the rehearsals/ directory. After jsonpatch is
-installed, all of its outbound network access is denied.
-
-    uv run python -m scripts.create_sandbox
-"""
-
 import subprocess
 import sys
 

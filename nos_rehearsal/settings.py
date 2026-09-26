@@ -1,5 +1,3 @@
-"""Runtime settings, read from the environment (and `.env` if present)."""
-
 import os
 from pathlib import Path
 

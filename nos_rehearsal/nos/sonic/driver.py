@@ -1,15 +1,3 @@
-"""SONiC driver: CONFIG_DB stored in Redis.
-
-SONiC keeps CONFIG_DB in Redis database 4, one hash per entry:
-
-- The key is "TABLE|entry", e.g. "VLAN_MEMBER|Vlan100|Ethernet0".
-- List values live in fields ending in "@", joined with commas
-  ("members@" = "Ethernet0,Ethernet4").
-- An entry with no fields holds a placeholder field "NULL" = "NULL".
-
-In Python the same data is the config_db.json shape: {table: {entry: {field: value}}}.
-"""
-
 import redis
 
 from nos_rehearsal.nos.base import Config
@@ -35,7 +23,6 @@ class SonicRedisDriver:
         return from_redis_hashes(dict(zip(keys, values)))
 
     def write_config(self, config: Config) -> None:
-        """Replace the whole CONFIG_DB with `config` in a single MULTI/EXEC transaction."""
         hashes = to_redis_hashes(config)
         old_keys = list(self._client.scan_iter())
         with self._client.pipeline(transaction=True) as pipe:
@@ -47,7 +34,6 @@ class SonicRedisDriver:
 
 
 def to_redis_hashes(config: Config) -> RedisHashes:
-    """Flatten a config_db.json-style dict into Redis keys and hash fields."""
     return {
         f"{table}{KEY_SEPARATOR}{entry}": _encode_fields(fields)
         for table, entries in config.items()
@@ -56,7 +42,6 @@ def to_redis_hashes(config: Config) -> RedisHashes:
 
 
 def from_redis_hashes(hashes: RedisHashes) -> Config:
-    """Rebuild a config_db.json-style dict from Redis keys and hash fields."""
     config: Config = {}
     for key, fields in sorted(hashes.items()):
         table, entry = key.split(KEY_SEPARATOR, 1)

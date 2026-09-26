@@ -1,13 +1,3 @@
-"""MCP server that exposes one device's production config to TrueForge.
-
-The device, its NOS profile and its driver come from devices.yaml. Read-only
-tools, including running a rehearsal in the Docker Sandbox, run on their own.
-Tools that write to production are marked destructive, so TrueForge pauses for
-a human before calling them.
-
-    uv run python -m nos_rehearsal.server
-"""
-
 import json
 import re
 from datetime import datetime, timezone

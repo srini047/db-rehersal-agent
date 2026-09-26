@@ -1,10 +1,3 @@
-"""Load the device's sample config (from its NOS profile) into "production".
-
-Re-run it at any time to reset the demo.
-
-    uv run python -m scripts.seed_device
-"""
-
 import json
 import sys
 

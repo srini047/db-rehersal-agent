@@ -1,10 +1,3 @@
-"""Load a device from devices.yaml, the profile of the NOS it runs, and its driver.
-
-A profile is a `nos.yaml` or `nos.json` file anywhere under nos_rehearsal/nos/,
-usually next to its driver. Both files are validated strictly, so a typo or an
-unknown driver stops the server at startup instead of silently weakening a guard.
-"""
-
 import os
 import re
 from pathlib import Path
@@ -25,7 +18,7 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 class ProfileError(RuntimeError):
-    """A device or NOS profile file is missing or invalid."""
+    pass
 
 
 class _Strict(BaseModel):
@@ -75,7 +68,6 @@ class _DevicesFile(_Strict):
 
 
 def load_device(name: str = "") -> tuple[Device, NosProfile]:
-    """The device called `name`, or the only device when `name` is empty, with its NOS profile."""
     devices = _parse(settings.DEVICES_PATH, _DevicesFile).devices
     if name:
         device = next((device for device in devices if device.name == name), None)
@@ -125,8 +117,6 @@ def _parse(path: Path, model: type[ModelT]) -> ModelT:
 
 
 def _expand_env(value: str) -> str:
-    """Replace ${NAME} or ${NAME:-default} with the environment value."""
-
     def replace(match: re.Match[str]) -> str:
         name, default = match.groups()
         if name in os.environ:

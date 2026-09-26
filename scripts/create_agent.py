@@ -1,13 +1,3 @@
-"""Register the device's MCP connector and the rehearsal agent in TrueForge.
-
-The agent's instructions are agent/instructions.md plus the device's NOS
-profile (reference checks and protected paths). Safe to re-run: both are
-created the first time and updated after that. The MCP server must be running,
-so TrueForge can list its tools.
-
-    uv run python -m scripts.create_agent
-"""
-
 import sys
 
 from trueforge_sdk import AgentSpec, McpServer, Model, RemoteMcpServerManifest, TrueForge
