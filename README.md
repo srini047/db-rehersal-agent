@@ -1,6 +1,7 @@
 # NOS Migration Rehearsal Agent
 
-A [TrueForge](https://trueforge.dev) agent that rehearses a change to a network device's configuration before it goes anywhere near production. It ships with one network operating system (NOS), SONiC, and is built so others (Nokia SR Linux or SR OS, Cisco IOS XR or NX-OS) plug in as a profile file plus a small driver; see [Adding a NOS](#adding-a-nos).
+A [TrueForge](https://trueforge.dev) agent that rehearses a change to a network device's configuration before it goes anywhere near production. Safely validate, review, and roll back network configuration changes before deployment.
+
 
 You hand it a JSON Patch (RFC 6902, the same format as SONiC's `config apply-patch`). The agent:
 
@@ -44,19 +45,39 @@ If something does go wrong, the damage is small. Every apply and every restore f
 
 ## Setup
 
-**Prerequisites:** [uv](https://docs.astral.sh/uv/), Docker, Node.js 22 or newer, a model provider API key, and the [Docker Sandboxes `sbx` CLI](https://docs.docker.com/ai/sandboxes/get-started/) signed in with `sbx login`.
+**Prerequisites:** [uv](https://docs.astral.sh/uv/), Docker, Node.js 22 or newer, a model provider API key, and the [Docker Sandboxes `sbx` CLI](https://docs.docker.com/ai/sandboxes/get-started/). Once per machine:
 
 ```bash
-git clone <this repo> && cd trueforge-hackathon
-uv sync                     # creates .venv and installs dependencies
-cp .env.example .env        # then set TRUEFORGE_MODEL (see step 3)
+sbx login                      # opens your browser
+sbx policy init balanced       # if you have never started a sandbox
+```
+
+### One command
+
+```bash
+git clone https://github.com/srini047/nos-rehersal-agent.git
+# Check into the directory
+./scripts/install.sh
+```
+
+This runs the manual steps below. It creates `.env` from `.env.example` if you don't have one, and starts TrueForge and the MCP server in the background (logs in `logs/`) unless something is already on their ports. On a fresh TrueForge it pauses so you can add a model at http://localhost:8790 under Settings, Models, and set `TRUEFORGE_MODEL` in `.env`. It is safe to re-run.
+
+`./scripts/cleanup.sh` stops what `install.sh` started and takes Redis down. It keeps the sandbox, `.env`, `backups/` and `rehearsals/`.
+
+### Manual setup
+
+```bash
+git clone https://github.com/srini047/nos-rehersal-agent.git
+# Check into the directory
+uv sync
+cp .env.example .env
 ```
 
 1. **Start "production" and load the sample config.**
 
    ```bash
    docker compose up -d --wait
-   uv run python -m scripts.seed_device    # re-run any time to reset the demo
+   uv run python -m scripts.seed_device    # re-run any time to reset to defaults
    ```
 
 2. **Start TrueForge and allow it to reach the local MCP server.** TrueForge blocks private addresses by default; this allows exactly one.
@@ -70,8 +91,6 @@ OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge
 4. **Create the rehearsal sandbox.** This mounts only `rehearsals/`, installs `jsonpatch` from PyPI, then denies all outbound network for this sandbox. It is safe to re-run.
 
    ```bash
-   sbx login                      # once, opens your browser
-   sbx policy init balanced       # once per machine, if you have never started a sandbox
    uv run python -m scripts.create_sandbox
    ```
 
@@ -105,27 +124,6 @@ OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge
 3. **Undo.** Ask the agent to restore the backup. That also pauses for approval.
 
 4. **Refused even when approved.** Ask it to apply [`examples/sonic/change_mgmt_gateway.json`](examples/sonic/change_mgmt_gateway.json). Approve it; the server still refuses because `MGMT_INTERFACE` is protected.
-
-## Project layout
-
-```
-devices.yaml                       Devices the agent may work on, and the NOS each runs
-agent/instructions.md              NOS-neutral system prompt: rehearse, report, ask, apply, undo
-nos_rehearsal/server.py            MCP tools
-nos_rehearsal/patching.py          Server-side guards (driven by the NOS profile) and change summary
-nos_rehearsal/sandbox.py           Run rehearsal scripts in the Docker Sandbox (sbx exec)
-nos_rehearsal/profiles.py          Load and validate devices.yaml and NOS profiles; create the driver
-nos_rehearsal/settings.py          Settings from the environment / .env
-nos_rehearsal/nos/__init__.py      Registry of NOS drivers
-nos_rehearsal/nos/base.py          NosDriver interface, config fingerprint
-nos_rehearsal/nos/sonic/nos.yaml   SONiC profile: protected paths, value types, checks, sample config
-nos_rehearsal/nos/sonic/driver.py  SONiC driver: CONFIG_DB in Redis
-scripts/seed_device.py             Load the profile's sample config into the device
-scripts/create_sandbox.py          Create the locked-down rehearsal sandbox
-scripts/create_agent.py            Register the connector and agent in TrueForge
-data/sonic/config_db.json          Sample SONiC switch config (dummy data)
-examples/sonic/                    Patches used in the demo
-```
 
 ## Adding a NOS
 

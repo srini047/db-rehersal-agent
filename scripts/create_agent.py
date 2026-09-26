@@ -19,7 +19,7 @@ GATED_TOOLS = ["@destructive", "apply_patch_to_production", "restore_backup"]
 def main() -> None:
     device, profile = load_device(settings.DEVICE)
     client = TrueForge(base_url=settings.TRUEFORGE_BASE_URL)
-    model_name = settings.TRUEFORGE_MODEL or _exit_with_model_help(client)
+    model_name = _configured_model(client)
 
     client.settings.mcp_servers.create_or_update(
         manifest=RemoteMcpServerManifest(
@@ -57,9 +57,11 @@ def render_instructions(device: Device, profile: NosProfile) -> str:
     )
 
 
-def _exit_with_model_help(client: TrueForge) -> str:
+def _configured_model(client: TrueForge) -> str:
     available = [model.name for model in client.models.list().data]
-    sys.exit(f"Set TRUEFORGE_MODEL in .env to one of the models configured in TrueForge: {', '.join(available) or 'none yet'}")
+    if settings.TRUEFORGE_MODEL not in available:
+        sys.exit(f"Set TRUEFORGE_MODEL in .env to one of the models configured in TrueForge: {', '.join(available) or 'none yet'}")
+    return settings.TRUEFORGE_MODEL
 
 
 if __name__ == "__main__":

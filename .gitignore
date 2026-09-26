@@ -63,4 +63,5 @@ __pycache__/
 .pytest_cache/
 backups/
 rehearsals/
+logs/
 
