@@ -1,4 +1,4 @@
-# NOS Migration Rehearsal Agent
+# NOS Rehearsal Agent
 
 A [TrueForge](https://trueforge.dev) agent that rehearses a change to a network device's configuration before it goes anywhere near production. Safely validate, review, and roll back network configuration changes before deployment.
 
