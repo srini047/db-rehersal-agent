@@ -1,7 +1,7 @@
 [project]
-name = "sonic-migration-rehearsal"
+name = "nos-rehearsal"
 version = "0.1.0"
-description = "TrueForge agent that rehearses SONiC CONFIG_DB changes in a sandbox before a human approves them for production."
+description = "TrueForge agent that rehearses network device config changes (SONiC today) in a sandbox before a human approves them for production."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -10,6 +10,8 @@ dependencies = [
     "jsonpatch>=1.33,<2",
     "trueforge-sdk>=0.2,<0.3",
     "python-dotenv>=1.0,<2",
+    "pyyaml>=6,<7",
+    "pydantic>=2,<3",
 ]
 
 [dependency-groups]
