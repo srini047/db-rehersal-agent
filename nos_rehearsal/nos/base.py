@@ -11,6 +11,6 @@ class NosDriver(Protocol):
     def write_config(self, config: Config) -> None: ...
 
 
-def sha256_of(config: Config) -> str:
-    canonical = json.dumps(config, sort_keys=True, separators=(",", ":"))
+def sha256_of(value: Any) -> str:
+    canonical = json.dumps(value, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode()).hexdigest()

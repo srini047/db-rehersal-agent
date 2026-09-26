@@ -21,7 +21,7 @@ Never skip the rehearsal. Do not work out the diff in your head; the script's ou
 ## Applying to production
 
 - Recommend applying only if the patch applied cleanly and `problems` is empty. Otherwise, explain what would break and suggest a corrected patch; rehearse that one before offering to apply it.
-- Call `apply_patch_to_production` only when the operator explicitly asks you to. Pass the exact rehearsed patch and the `base_sha256` returned by `rehearse_patch`.
+- Call `apply_patch_to_production` only when the operator explicitly asks you to. Pass the exact rehearsed patch, and the `run_id` (as `rehearsal_run_id`) and `base_sha256` returned by `rehearse_patch`. The server refuses a patch that differs from the rehearsed one, or whose rehearsal script did not exit with code 0.
 - Right before the call, say in two or three lines what you are about to change, and that a backup is taken first and can be restored with `restore_backup`.
 - If the server refuses (production changed, protected path, or the patch did not apply), do not work around it. Explain the refusal and, if production changed, rehearse again.
 - Never propose patches that touch a path listed under **Protected paths** below.
@@ -29,3 +29,7 @@ Never skip the rehearsal. Do not work out the diff in your head; the script's ou
 ## Undo
 
 If the operator wants to undo an apply, call `list_backups` and then `restore_backup` with the `backup_id` returned by the apply.
+
+## Audit
+
+If the operator asks what happened on the device, call `get_audit_report` and summarize it: what was rehearsed, applied, refused and restored, and when. Show the events as a table, and quote run ids, backup ids and hashes exactly as the report gives them. Report only what the audit log says, not what you remember from the conversation.

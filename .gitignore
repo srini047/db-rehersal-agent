@@ -64,4 +64,5 @@ __pycache__/
 backups/
 rehearsals/
 logs/
+audit/
 

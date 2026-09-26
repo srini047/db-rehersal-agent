@@ -34,14 +34,24 @@ flowchart LR
 
 | Action | Who decides | Why |
 | --- | --- | --- |
-| `get_config_snapshot`, `list_backups` | Agent, alone | Read-only (`readOnlyHint`). |
+| `get_config_snapshot`, `list_backups`, `get_audit_report` | Agent, alone | Read-only (`readOnlyHint`). |
 | `rehearse_patch` (runs agent-written code) | Agent, alone | Runs in a microVM with no network, on a copy. It cannot touch production. |
 | `apply_patch_to_production`, `restore_backup` | A human, every time | Marked `destructiveHint` **and** named in `require_approval_for_tools`, so the gate holds even if annotations are dropped. |
 | Patches touching a protected path (for SONiC: `/DEVICE_METADATA`, `/MGMT_INTERFACE`) | Nobody | Refused by the server even when approved, including patches on a parent path. The list lives in the NOS profile. A bad management change can cut off access to the switch. |
 | Applying a stale rehearsal | Nobody | The apply carries the snapshot's sha256. If production changed since the rehearsal, the server refuses. |
+| Applying a patch that was not rehearsed, or whose rehearsal script failed | Nobody | The apply carries the rehearsal's `run_id`. The server refuses unless that rehearsal was for this exact patch and its script exited with code 0. |
 | Whole-config replacement, malformed or non-applying patches, values of the wrong type for the NOS | Nobody | Refused by the server. |
 
 If something does go wrong, the damage is small. Every apply and every restore first saves a timestamped backup to `backups/`. The SONiC driver writes in a single Redis `MULTI/EXEC` transaction, so there are no half-applied changes, and `restore_backup` undoes it.
+
+## Audit
+
+The server appends every rehearsal, apply, refused apply and restore to `audit/<device>.jsonl` as it happens, with patch and config hashes, run and backup ids, the change summary and any refusal reason. The agent cannot write to it, and the sandbox cannot see it. The log also holds the rehearsal receipts that applies are checked against.
+
+- Ask the agent "What happened on this device today?"; it calls `get_audit_report`.
+- For a report with no model involved: `uv run python -m scripts.audit_report --since 2026-09-26`.
+
+TrueForge does not pass the approver's identity to the MCP server, so the log records that an apply ran (which means it was allowed), not who allowed it.
 
 ## Setup
 
@@ -62,7 +72,7 @@ git clone https://github.com/srini047/nos-rehersal-agent.git
 
 This runs the manual steps below. It creates `.env` from `.env.example` if you don't have one, and starts TrueForge and the MCP server in the background (logs in `logs/`) unless something is already on their ports. On a fresh TrueForge it pauses so you can add a model at http://localhost:8790 under Settings, Models, and set `TRUEFORGE_MODEL` in `.env`. It is safe to re-run.
 
-`./scripts/cleanup.sh` stops what `install.sh` started and takes Redis down. It keeps the sandbox, `.env`, `backups/` and `rehearsals/`.
+`./scripts/cleanup.sh` stops what `install.sh` started and takes Redis down. It keeps the sandbox, `.env`, `backups/`, `rehearsals/` and `audit/`.
 
 ### Manual setup
 
@@ -83,7 +93,7 @@ cp .env.example .env
 2. **Start TrueForge and allow it to reach the local MCP server.** TrueForge blocks private addresses by default; this allows exactly one.
 
    ```bash
-OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge
+   OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge
    ```
 
 3. **Configure a model in TrueForge** at http://localhost:8790, under Settings, Models. Put the model name (for example `openai/gpt-5.2`) in `TRUEFORGE_MODEL` in `.env`. No TrueForge sandbox provider is needed.
@@ -115,7 +125,7 @@ OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge
 
    Watch the `rehearse_patch` call carrying the agent's script. The report flags the `VLAN_MEMBER` and `VLAN_INTERFACE` entries left pointing at the deleted VLAN, and advises against applying. To show where the code ran, open `rehearsals/<run_id>/` (the files the sandbox saw) and run `sbx ls`.
 
-2. **A safe patch.** Paste [`examples/sonic/move_ethernet8_to_vlan200.json`](examples/sonic/move_ethernet8_to_vlan200.json) and ask it to rehearse, then apply. The rehearsal is clean. The agent explains what it is about to change, and TrueForge shows the approval card with the exact patch and base hash. Click **Allow**, then check production:
+2. **A safe patch.** Paste [`examples/sonic/move_ethernet8_to_vlan200.json`](examples/sonic/move_ethernet8_to_vlan200.json) and ask it to rehearse, then apply. The rehearsal is clean. The agent explains what it is about to change, and TrueForge shows the approval card with the exact patch, the rehearsal `run_id` and the base hash. Click **Allow**, then check production:
 
    ```bash
    docker exec sonic-configdb redis-cli -n 4 hget "VLAN|Vlan200" "members@"
@@ -124,6 +134,8 @@ OUTBOUND_URL_ALLOWED_HOSTS='["127.0.0.1"]' npx @truefoundry/trueforge
 3. **Undo.** Ask the agent to restore the backup. That also pauses for approval.
 
 4. **Refused even when approved.** Ask it to apply [`examples/sonic/change_mgmt_gateway.json`](examples/sonic/change_mgmt_gateway.json). Approve it; the server still refuses because `MGMT_INTERFACE` is protected.
+
+5. **Audit.** Ask "What happened on this device today?". The agent's table comes from the server's log, including the refused apply. Run `uv run python -m scripts.audit_report` for the same report without the model.
 
 ## Adding a NOS
 

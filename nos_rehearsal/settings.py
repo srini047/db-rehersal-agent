@@ -14,6 +14,10 @@ NOS_DIR = Path(__file__).resolve().parent / "nos"
 
 BACKUP_DIR = REPO_ROOT / "backups"
 
+# Also holds the rehearsal receipts that applies are checked against, so it
+# must stay outside REHEARSAL_DIR, where sandboxed scripts can write.
+AUDIT_DIR = REPO_ROOT / "audit"
+
 # Docker Sandbox (sbx microVM) that runs the agent's rehearsal scripts. Only
 # REHEARSAL_DIR is mounted into it.
 SANDBOX_NAME = os.environ.get("SANDBOX_NAME", "sonic-rehearsal")

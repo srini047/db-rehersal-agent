@@ -20,6 +20,19 @@ class PatchRejected(ValueError):
     pass
 
 
+def check_rehearsal(rehearsal: dict[str, Any] | None, run_id: str, patch_sha256: str, base_sha256: str) -> None:
+    if rehearsal is None:
+        raise PatchRejected(f"No rehearsal with run_id {run_id!r}. Rehearse this patch with rehearse_patch first.")
+    if rehearsal["exit_code"] != 0:
+        raise PatchRejected(
+            f"Rehearsal {run_id} exited with code {rehearsal['exit_code']}. Fix the script and rehearse again."
+        )
+    if rehearsal["patch_sha256"] != patch_sha256:
+        raise PatchRejected(f"This is not the patch rehearsed in {run_id}. Rehearse this exact patch first.")
+    if rehearsal["base_sha256"] != base_sha256:
+        raise PatchRejected(f"base_sha256 does not match rehearsal {run_id}. Pass the base_sha256 it returned.")
+
+
 def apply_guarded_patch(
     config: Config, patch: list[dict], base_sha256: str, current_sha256: str, profile: NosProfile
 ) -> Config:
