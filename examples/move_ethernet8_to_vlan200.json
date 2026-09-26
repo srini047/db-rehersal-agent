@@ -1,0 +1,7 @@
+[
+  { "op": "remove", "path": "/VLAN_MEMBER/Vlan100|Ethernet8" },
+  { "op": "add", "path": "/VLAN_MEMBER/Vlan200|Ethernet8", "value": { "tagging_mode": "untagged" } },
+  { "op": "test", "path": "/VLAN/Vlan100/members/2", "value": "Ethernet8" },
+  { "op": "remove", "path": "/VLAN/Vlan100/members/2" },
+  { "op": "add", "path": "/VLAN/Vlan200/members/-", "value": "Ethernet8" }
+]

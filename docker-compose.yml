@@ -1,0 +1,11 @@
+services:
+  configdb:
+    image: redis:7-alpine
+    container_name: sonic-configdb
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 10

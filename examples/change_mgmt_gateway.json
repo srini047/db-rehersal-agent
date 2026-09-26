@@ -1,0 +1,3 @@
+[
+  { "op": "replace", "path": "/MGMT_INTERFACE/eth0|10.0.0.10~124/gwaddr", "value": "10.0.0.254" }
+]

@@ -1,0 +1,20 @@
+[project]
+name = "sonic-migration-rehearsal"
+version = "0.1.0"
+description = "TrueForge agent that rehearses SONiC CONFIG_DB changes in a sandbox before a human approves them for production."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=2.2,<3",
+    "redis>=5,<9",
+    "jsonpatch>=1.33,<2",
+    "trueforge-sdk>=0.2,<0.3",
+    "python-dotenv>=1.0,<2",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
