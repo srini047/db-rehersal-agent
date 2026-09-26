@@ -9,8 +9,11 @@ load_dotenv()
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/4")
-SEED_CONFIG_PATH = REPO_ROOT / "data" / "config_db.json"
+# Which device from devices.yaml to serve; may be empty when it lists only one.
+DEVICES_PATH = REPO_ROOT / "devices.yaml"
+DEVICE = os.environ.get("DEVICE", "")
+NOS_DIR = Path(__file__).resolve().parent / "nos"
+
 BACKUP_DIR = REPO_ROOT / "backups"
 
 # Docker Sandbox (sbx microVM) that runs the agent's rehearsal scripts. Only

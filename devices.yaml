@@ -1,0 +1,8 @@
+# The devices the agent may work on, and the NOS each one runs.
+# Secrets and addresses come from the environment as ${NAME} or ${NAME:-default};
+# never put credentials in this file.
+devices:
+  - name: lab-sonic-01
+    nos: sonic
+    connection:
+      redis_url: "${REDIS_URL:-redis://localhost:6379/4}"

@@ -9,7 +9,7 @@ installed, all of its outbound network access is denied.
 import subprocess
 import sys
 
-from sonic_mcp import settings
+from nos_rehearsal import settings
 
 NAME = settings.SANDBOX_NAME
 

@@ -1,0 +1,28 @@
+# SONiC: open-source NOS that runs on many vendors' switches.
+id: sonic
+name: SONiC
+vendor: community
+driver: sonic-redis
+
+# CONFIG_DB is {table: {entry: {field: value}}}; values are strings or string lists.
+value_types: [string, string-list]
+leaf_depth: 3
+
+# Changing these can cut the switch off from its management network or change
+# its identity, so no patch may touch them, approved or not.
+protected_paths:
+  - /DEVICE_METADATA
+  - /MGMT_INTERFACE
+
+sample_config: data/sonic/config_db.json
+
+# Given to the agent; its rehearsal script must run every one of them.
+checks:
+  - id: vlan-member-refs
+    description: "`VLAN_MEMBER` key `VlanX|PortY`: `VLAN` must have `VlanX` and `PORT` must have `PortY`."
+  - id: vlan-members-list
+    description: "`VLAN.<vlan>.members`: every member must exist in `PORT` and have a matching `VLAN_MEMBER` entry, and vice versa."
+  - id: vlan-interface-refs
+    description: "`VLAN_INTERFACE` key `VlanX` or `VlanX|<ip>`: `VLAN` must have `VlanX`."
+  - id: interface-refs
+    description: "`INTERFACE` key `PortY` or `PortY|<ip>`: `PORT` must have `PortY`."

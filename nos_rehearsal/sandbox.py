@@ -2,8 +2,8 @@
 
 Each run gets its own directory under REHEARSAL_DIR holding `snapshot.json`,
 `patch.json` and `rehearse.py`. That directory tree is the only part of the
-host the sandbox can see, so the script never has access to Redis, `.env`, or
-the rest of the repo.
+host the sandbox can see, so the script never has access to the device, `.env`,
+or the rest of the repo.
 """
 
 import json
@@ -12,8 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from sonic_mcp import settings
-from sonic_mcp.configdb import Config
+from nos_rehearsal import settings
+from nos_rehearsal.nos.base import Config
 
 SCRIPT_NAME = "rehearse.py"
 MAX_SCRIPT_CHARS = 20_000
